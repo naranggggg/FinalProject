@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.1.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd">
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	<bean class="org.apache.commons.dbcp.BasicDataSource" id="dataSource">
+		<!-- 어떤 DB에 접속할것인지 작성 -->
+		<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
+		<property name="url" value="jdbc:oracle:thin:@localhost:1521:xe" />
+		<property name="username" value="TINYFARM" />
+		<property name="password" value="TINYFARM" />
+	</bean>
+		<!-- Member m = new Member() -->
+	<!-- BasicDataSource dataSoruce = new Basi..... -->
+	<!-- dataSource.setDriverClassName("oracle.....") -->
+	<!-- 이런느낌을 bean으로 작성한거 둘이 똑같은 거임 방식만 다를뿐 -->
+	
+	<!-- 2단계. Mybatis Spring에서 제공하는 SQL 명령어 실행을 위한 도구 등록 / 맵퍼도 등록해줘야함-->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- mybatis 설정넣기 classpath : resources 폴더 -->
+		<property name="configLocation" value="classpath:mybatis-config.xml" />
+		<property name="mapperLocations" value="classpath:mappers/*-mapper.xml"/> <!-- *-mapper.xml로 하면 모든 맵퍼가 적용됨-->
+	
+		<!-- DB생성정보 넣기(연결정보 참조) -->
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<!-- 3단계 : SQL구문을 실행시켜줄 템플릿을 제공하는 도구 등록 -->
+	<bean class="org.mybatis.spring.SqlSessionTemplate" id="sqlSession">
+		<!-- 참조설정 -->
+		<constructor-arg ref="sqlSessionFactory" />
+	</bean>
+	
+	<!-- 파일 업로드 bean -->
+	 <bean class="org.springframework.web.multipart.commons.CommonsMultipartResolver" id="multipartResolver"> 
+	 	<property name="defaultEncoding" value="UTF-8"/>  	<!-- 업로드 되는 파일에 대한 인코딩 처리 -->
+	 	<property name="maxUploadSize" value="10000000"/>  <!-- 업로드 파일 용량제한 -->
+	 	<property name="maxInMemorySize" value="10000000"/> <!-- 메모리 보관 최대크기(임시저장크기) -->
+	</bean>
+	
+	<!-- AOP 관련 설정
+		@Aspect와 관련된 어노테이션 활성화
+		Namespaces가서 aop를 체크해서 자동완성켜주기 그래도 안나온다면 pom.xml에서 제대로 작성을 안한거
+	-->
+	<aop:aspectj-autoproxy/>
+	
+	<!--
+		component-scan 등록하기
+		@Service, @Repository, @Aspect를  스캔하는 설정 추가해주기
+		 use-default-filters : 기본스캔을 할지 여부(true/false)
+	 -->
+	 <context:component-scan base-package="com.kh.tinyfarm" use-default-filters="false">
+	 	<context:include-filter type="annotation" expression="org.springframework.stereotype.Service"/>  <!-- expression경로는 쓸 클래스 import가서 복사하기 serviceImpl -->
+	 	<context:include-filter type="annotation" expression="org.springframework.stereotype.Repository"/> 
+	 	<context:include-filter type="annotation" expression="org.aspectj.lang.annotation.Aspect"/> 
+	 </context:component-scan>
+</beans>

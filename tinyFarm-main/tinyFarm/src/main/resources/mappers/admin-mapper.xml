@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+  
+	<mapper namespace="adminMapper">
+	
+		<resultMap type="boardReport" id="boardReportResultSet">
+			<result column="REPORT_NO" property="reportNo" />
+			<result column="REPORT_WRITER" property="reportWriter" />
+			<result column="REF_BNO" property="refBno" />
+			<result column="CATEGORY" property="category" />
+			<result column="REPORT_CONTENT" property="reportContent" />
+			<result column="CREATE_DATE" property="createDate" />
+			<result column="STATUS" property="status" />
+		</resultMap>
+
+		<resultMap type="replyReport" id="replyReportResultSet">
+			<result column="REPORT_NO" property="reportNo" />
+			<result column="REPORT_WRITER" property="reportWriter" />
+			<result column="REF_RNO" property="refRno" />
+			<result column="CATEGORY" property="category" />
+			<result column="REPORT_CONTENT" property="reportContent" />
+			<result column="CREATE_DATE" property="createDate" />
+			<result column="STATUS" property="status" />
+		</resultMap>
+		
+		
+		<resultMap type="board" id="boardResultSet">
+			  	<result column="BOARD_NO" property="boardNo"/>
+			  	<result column="BOARD_WRITER" property="boardWriter"/>
+			  	<result column="BOARD_TITLE" property="boardTitle"/>
+			  	<result column="BOARD_CONTENT" property="boardContent"/>
+			  	<result column="COUNT" property="count"/>
+			  	<result column="LIKE_COUNT" property="likeCount"/>
+			  	<result column="CREATE_DATE" property="createDate"/>
+			  	<result column="CHANGE_NAME"  property="profile"/>
+			  	<result column="REPLY_COUNT" property="replyCount"/>
+	  	</resultMap>
+	  	
+	  	
+	  	<resultMap type="boardReply" id="boardReplyResultSet">
+	  		<result column="REPLY_NO" property="replyNo"/>
+	  		<result column="REF_BNO" property="refBno"/>
+	  		<result column="REPLY_WRITER" property="replyWriter"/>
+	  		<result column="REPLY_CONTENT" property="replyContent"/>
+	  		<result column="LIKE_COUNT" property="likeCount"/>
+	  		<result column="CREATE_DATE" property="createDate"/>
+	  		<result column="STATUS" property="status"/>
+	  		<result column="CHANGE_NAME" property="profile"/>
+	  	</resultMap>
+		
+		
+		<!-- admin - 신고 게시글 개수 세기 -->
+		<select id="reportListCount" resultType="_int">
+  			SELECT COUNT(*) FROM
+		        <if test="type == 'board'">
+		        	BOARD_REPORT BR JOIN BOARD B ON(REF_BNO = BOARD_NO)
+					WHERE BR.STATUS = 'Y' AND B.STATUS = 'Y'
+		        </if>
+		        <if test="type == 'reply'">
+		        	REPLY_REPORT RR JOIN BOARD_REPLY BR ON(REF_RNO = REPLY_NO)
+		        	WHERE RR.STATUS = 'Y' AND BR.STATUS = 'Y'
+		        </if>
+				<if test="type == 'board'">
+					<if test="category == 1">AND BR.CATEGORY LIKE '스팸'</if>
+					<if test="category == 2">AND BR.CATEGORY LIKE '욕설'</if>
+					<if test="category == 3">AND BR.CATEGORY LIKE '광고'</if>
+					<if test="category == 4">AND BR.CATEGORY LIKE '음란물'</if>
+				</if>
+				<if test="type == 'reply'">
+					<if test="category == 1">AND RR.CATEGORY LIKE '스팸'</if>
+					<if test="category == 2">AND RR.CATEGORY LIKE '욕설'</if>
+					<if test="category == 3">AND RR.CATEGORY LIKE '광고'</if>
+					<if test="category == 4">AND RR.CATEGORY LIKE '음란물'</if>
+				</if>
+  		</select>
+  		
+  		
+  		<!-- 게시글 신고 리스트 -->
+  		<select id="selectBoardReportList" resultMap="boardReportResultSet">
+			SELECT
+				REPORT_NO,
+				USER_ID REPORT_WRITER,
+				REF_BNO,
+				CATEGORY,
+				REPORT_CONTENT,
+				BR.CREATE_DATE,
+				BR.STATUS
+				FROM BOARD_REPORT BR
+				JOIN MEMBER ON(USER_NO = REPORT_WRITER)
+                JOIN BOARD B ON(REF_BNO = BOARD_NO)
+				WHERE BR.STATUS = 'Y'
+                AND B.STATUS = 'Y'
+			<choose>
+		        <when test="category == 1">AND CATEGORY LIKE '스팸'</when>
+		        <when test="category == 2">AND CATEGORY LIKE '욕설'</when>
+		        <when test="category == 3">AND CATEGORY LIKE '광고'</when>
+		        <when test="category == 4">AND CATEGORY LIKE '음란물'</when>
+		        <otherwise></otherwise>
+		    </choose>
+		    ORDER BY BR.CREATE_DATE DESC
+  		</select>
+  		
+  		<!-- 댓글 신고 리스트 -->
+  		<select id="selectReplyReportList" resultMap="replyReportResultSet">
+  			SELECT
+				REPORT_NO,
+				REPORT_WRITER,
+				REF_RNO,
+				CATEGORY,
+				REPORT_CONTENT,
+				RR.CREATE_DATE
+		        FROM REPLY_REPORT RR
+                JOIN BOARD_REPLY BR ON (REPLY_NO = REF_RNO)
+				WHERE RR.STATUS = 'Y'
+                AND BR.STATUS = 'Y'
+			<choose>
+		        <when test="category == 1">AND CATEGORY LIKE '스팸'</when>
+		        <when test="category == 2">AND CATEGORY LIKE '욕설'</when>
+		        <when test="category == 3">AND CATEGORY LIKE '광고'</when>
+		        <when test="category == 4">AND CATEGORY LIKE '음란물'</when>
+		        <otherwise></otherwise>
+		    </choose>
+		    ORDER BY RR.CREATE_DATE DESC
+  		</select>
+  		
+  		
+  		
+  		
+  		<update id="revokeReport">
+  			UPDATE
+	  			<choose>
+			        <when test="type == 'board'">
+			            BOARD_REPORT
+			        </when>
+			        <otherwise>
+			        	REPLY_REPORT
+			        </otherwise>
+			    </choose>
+  			SET STATUS = 'N'
+			WHERE REPORT_NO IN 
+		    <foreach collection="rList" item="reportNo" index="index" open="(" close=")" separator=","> 
+		        #{reportNo}
+		    </foreach>
+  		</update>
+  		
+  		
+  		
+		<update id="deleteReport">
+			<choose>
+				<when test="type == 'board'">
+					UPDATE BOARD
+		  			SET STATUS = 'N'
+					WHERE  BOARD_NO IN
+		            (
+		            SELECT REF_BNO FROM BOARD_REPORT
+		            WHERE REPORT_NO IN
+				</when>
+				<otherwise>
+					UPDATE BOARD_REPLY
+		  			SET STATUS = 'N'
+					WHERE  REPLY_NO IN
+		            (
+		            SELECT REF_RNO FROM REPLY_REPORT
+		            WHERE REPORT_NO IN
+				</otherwise>
+			</choose>
+				<foreach collection="rList" item="reportNo" index="index" open="(" close=")" separator=","> 
+			        #{reportNo}
+			    </foreach>
+			    )
+		</update>
+		
+
+
+		<select id="reportBoardDetailInfo" resultMap="boardResultSet">
+			SELECT
+				BOARD_NO,
+				USER_ID BOARD_WRITER,
+				BOARD_TITLE,
+				BOARD_CONTENT,
+				CREATE_DATE
+			FROM BOARD JOIN MEMBER ON(USER_NO = BOARD_WRITER)
+			WHERE BOARD_NO =
+							(SELECT REF_BNO FROM BOARD_REPLY
+							WHERE REPLY_NO = #{replyNo})
+		</select>
+		
+		
+		<select id="reportReplyDetailInfo" resultMap="boardReplyResultSet">
+			SELECT
+				REPLY_NO,
+				REF_BNO,
+				USER_ID REPLY_WRITER,
+				REPLY_CONTENT,
+				CHANGE_NAME,
+				CREATE_DATE
+			FROM BOARD_REPLY
+			JOIN MEMBER ON(USER_NO = REPLY_WRITER)
+			WHERE REPLY_NO =  #{replyNo}
+		</select>
+		
+
+  		
+  		<!-- ############################################################## -->
+  		<!-- 통계 -->
+  		<select id="selectStaticCount" resultType="_int">
+  			SELECT
+  				<if test="selectRange == 'count'">COUNT(*)</if>
+  				<if test="selectRange == 'max'">NVL(MAX(
+	  				<choose>
+				        <when test="tableName == 'payment'">PAYMENT_PRICE</when>
+				        <otherwise>*</otherwise>
+				    </choose>
+  				), 0)</if>
+  				<if test="selectRange == 'min'">NVL(MIN(
+	  				<choose>
+				        <when test="tableName == 'payment'">PAYMENT_PRICE</when>
+				        <otherwise>*</otherwise>
+				    </choose>  				
+  				), 0)</if>
+  				<if test="selectRange == 'avg'">NVL(AVG(
+	  				<choose>
+				        <when test="tableName == 'payment'">PAYMENT_PRICE</when>
+				        <otherwise>*</otherwise>
+				    </choose>
+  				), 0)</if>
+  				<if test="selectRange == 'sum'">NVL(SUM(
+	  				<choose>
+				        <when test="tableName == 'payment'">PAYMENT_PRICE</when>
+				        <otherwise>*</otherwise>
+				    </choose>
+  				), 0)</if>
+  			FROM
+  				<choose>
+			        <when test="tableName == 'member'">MEMBER</when>
+			        <when test="tableName == 'qna'">QNA</when>
+			        <when test="tableName == 'qnaAnswer'">QNA_ANSWER</when>
+			        <when test="tableName == 'product'">PRODUCT</when>
+			        <when test="tableName == 'payment'">PRODUCT_PAYMENT</when>
+			        <when test="tableName == 'board'">BOARD</when>
+			        <when test="tableName == 'boardReport'">BOARD_REPORT</when>
+			        <when test="tableName == 'boardReply'">BOARD_REPLY</when>
+			        <when test="tableName == 'replyReport'">REPLY_REPORT</when>
+			        <otherwise></otherwise>
+			    </choose>
+			WHERE 1=1
+			    <if test="whereRange == 'today'">
+		    	  	AND TO_DATE(
+	  			  		<choose>
+					        <when test="tableName == 'member'">ENROLL_DATE</when>
+					        <when test="tableName == 'qna'">QNA_CREATEDATE</when>
+					        <when test="tableName == 'qnaAnswer'">QNA_ANSWER_CREATEDATE</when>
+					        <when test="tableName == 'product'">REGI_DATE</when>
+					        <when test="tableName == 'payment'">ORDER_DATE</when>
+					        <otherwise>CREATE_DATE</otherwise>
+					    </choose>
+	  				, 'YY/MM/DD') = TO_DATE(SYSDATE, 'YY/MM/DD')
+			    </if>
+			    <if test="whereRange == 'onSale'">
+  			  		<choose>
+				        <when test="tableName == 'product'">AND SALES_STATUS = 'Y'</when>
+				        <when test="tableName == 'payment'">AND SALES_STATUS = 'Y'</when>
+				        <otherwise></otherwise>
+				    </choose>
+			    </if>
+			    <if test="whereRange == 'notSale'">
+  			  		<choose>
+				        <when test="tableName == 'product'">AND SALES_STATUS = 'N'</when>
+				        <when test="tableName == 'payment'">AND SALES_STATUS = 'N'</when>
+				        <otherwise></otherwise>
+				    </choose>
+			    </if>
+			    <if test="whereRange == 'notSale'">
+  			  		<choose>
+				        <when test="tableName == 'product'">AND SALES_STATUS = 'N'</when>
+				        <when test="tableName == 'payment'">AND SALES_STATUS = 'N'</when>
+				        <otherwise></otherwise>
+				    </choose>
+			    </if>
+			    <if test="whereRange == 'categoryNo__1'">
+  			  		AND CATEGORY_NO = 1
+			    </if>
+			    <if test="whereRange == 'categoryNo__2'">
+  			  		AND CATEGORY_NO = 2
+			    </if>
+			    <if test="whereRange == 'categoryNo__3'">
+  			  		AND CATEGORY_NO = 3
+			    </if>
+  		</select>
+
+
+		
+		<select id="memberStaticCount" resultType="_int">
+			SELECT COUNT(*)
+  			FROM MEMBER
+  			WHERE 1=1
+	        <if test="category == 'active'">
+	           AND STATUS = 'Y'
+	        </if>
+	        <if test="category == 'sns'">
+	           AND ORIGIN_NAME LIKE '%' || 'k.kakaocdn' || '%'
+	        </if>
+		</select>
+		
+		
+		
+	</mapper>

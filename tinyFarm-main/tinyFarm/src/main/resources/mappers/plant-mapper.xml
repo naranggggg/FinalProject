@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="plantMapper">
+	<resultMap type="plantComment" id="plantCommentResultMap">
+		<result column="CTP_NO" property="ctpNo"/>
+		<result column="CNTNTS_NO" property="cntntsNo"/>
+	  	<result column="STAR" property="star"/>
+	  	<result column="COMMENT_WRITER" property="commentWriter"/>
+	  	<result column="COMMENT_CONTENT" property="commentContent"/>
+	  	<result column="CREATE_DATE" property="createDate"/>
+	</resultMap>
+	
+	<!-- 식물 의견 추가 -->
+	<insert id="insertCommentToPlant" parameterType="plantComment">
+		INSERT INTO COMMENT_TO_PLANT(CTP_NO
+									,CNTNTS_NO
+									,STAR
+									,COMMENT_WRITER
+									,COMMENT_CONTENT)
+					VALUES(SEQ_CTP_NO.NEXTVAL
+						  ,#{cntntsNo}
+						  ,#{star}
+						  ,#{commentWriter}
+						  ,#{commentContent})
+		
+	</insert>
+	<!-- 식물 의견 수 세기 -->
+	<select id="getCommentCount" parameterType="_int" resultType="_int">
+		SELECT COUNT(*)
+		FROM COMMENT_TO_PLANT
+		WHERE CNTNTS_NO = #{cntntsNo}
+		
+	</select>
+	<!-- 식물 의견 불러오기 -->
+	<select id="selectComment" parameterType="_int" resultMap="plantCommentResultMap">
+		SELECT *
+		FROM COMMENT_TO_PLANT
+		WHERE CNTNTS_NO = #{cntntsNo}
+		ORDER BY CREATE_DATE DESC
+	</select>
+	
+	<!-- 식물 의견 수정 -->
+	<update id="updateComment" parameterType="plantComment">
+		UPDATE COMMENT_TO_PLANT
+		SET STAR = #{star}
+	   	   ,COMMENT_CONTENT = #{commentContent}
+	   	   ,CREATE_DATE = SYSDATE
+		WHERE CTP_NO = #{ctpNo}
+	</update>
+	
+	<!-- 식물 의견 삭제 -->
+	<delete id="deleteComment" parameterType="_int">
+		DELETE FROM COMMENT_TO_PLANT
+		WHERE CTP_NO = #{ctp_no}
+	</delete>
+</mapper>

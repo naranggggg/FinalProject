@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+  
+	<mapper namespace = "memberMapper" >
+	
+		<resultMap type = "member" id = "memberResultSet">
+			<result column = "USER_NO" property="userNo"/>
+			<result column = "USER_ID" property="userId"/>
+			<result column = "USER_PWD" property="userPwd"/>
+			<result column = "USER_NAME" property="userName"/>
+			<result column = "EMAIL" property="email"/>
+			<result column = "PHONE" property="phone"/>
+			<result column = "ADDRESS" property="address"/>
+			<result column = "ORIGIN_NAME" property="originName"/>
+			<result column = "CHANGE_NAME" property="changeName"/>
+			<result column = "ENROLL_DATE" property="enrollDate"/>
+			<result column = "GRADE" property="grade"/>
+			<result column = "STATUS" property="status"/>
+		</resultMap>
+		
+		<select id = "loginMember" resultMap ="memberResultSet">
+			SELECT USER_NO
+			     , USER_ID
+			     , USER_PWD
+			     , USER_NAME
+			     , EMAIL
+			     , PHONE
+			     , ADDRESS
+			     , ORIGIN_NAME
+                 , CHANGE_NAME
+			     , ENROLL_DATE
+			     , GRADE
+			     , STATUS
+			FROM MEMBER
+			WHERE USER_ID = #{userId}
+<!--  		AND USER_PWD = #{userPwd} -->	
+			AND STATUS = 'Y'
+		</select>
+		
+		<select id="findId" resultType="String">
+	        SELECT USER_ID 
+	        	FROM MEMBER 
+		        WHERE USER_NAME = #{userName} 
+		        	AND 
+		        PHONE = #{phone}
+		</select>
+		
+		<insert id = "insertMember" parameterType = "member">
+			INSERT INTO MEMBER (  USER_NO
+								  ,	ORIGIN_NAME
+								  , CHANGE_NAME
+								  , USER_ID
+								  , USER_PWD
+								  , USER_NAME
+								  , EMAIL
+								  , PHONE
+								  , ADDRESS
+								) VALUES (
+								  SEQ_MNO.NEXTVAL
+								, #{originName}
+								, #{changeName}
+								, #{userId}
+								, #{userPwd}
+								, #{userName}
+								, #{email}
+								, #{phone}
+								, #{address}
+							)
+		</insert>
+		
+		
+		<select id="checkId" resultType="_int" parameterType="string">
+	SELECT count(*)
+	FROM MEMBER
+	WHERE USER_ID= #{userId}
+  		</select>
+		
+		<!-- 회원 비밀번호 수정 -->
+		<update id="updatePw" parameterType="member">
+			UPDATE MEMBER SET
+			USER_PWD = #{userPwd}
+			WHERE USER_ID = #{userId}
+		</update>
+		
+		<select id="readMember" resultMap="memberResultSet" parameterType="java.lang.String">
+		    SELECT USER_NO, USER_ID, USER_PWD, USER_NAME, EMAIL, PHONE, ADDRESS, ORIGIN_NAME, CHANGE_NAME, ENROLL_DATE, GRADE, STATUS
+		    FROM MEMBER
+		    WHERE USER_ID = #{userId}
+		</select>
+		
+		 <select id="idCheck" parameterType="string" resultType="int">
+	        SELECT COUNT(*) FROM MEMBER
+	        WHERE USER_ID = #{userId}
+	    </select>
+	    
+    
+		<select id="findPwCheck" resultType="int">
+			SELECT COUNT(*) FROM MEMBER
+			WHERE EMAIL = #{EMAIL} AND
+			USER_Id = #{USER_ID}		
+		</select>
+	
+		
+		<!-- admin -->
+		<select id="memberListCount" resultType="_int" parameterType="string">
+  			SELECT COUNT(*) FROM MEMBER
+  			<if test='searchId != ""'>
+  				 WHERE USER_ID  LIKE '%' || #{searchId} || '%'
+  			</if>
+  		</select>
+  		
+  		<select id="selectMemberList" resultMap="memberResultSet">
+  			SELECT * FROM MEMBER
+  			<if test='searchId != ""'>
+  				 WHERE USER_ID  LIKE '%' || #{searchId} || '%'
+  			</if>
+		    ORDER BY USER_NO
+  		</select>
+  		
+  		
+  		
+		<update id="memberStatus" parameterType="hashmap">
+		    UPDATE MEMBER SET
+		    STATUS = 
+		    <choose>
+		        <when test="status == 1">
+		            'Y'
+		        </when>
+		        <otherwise>
+		            'N'
+		        </otherwise>
+		    </choose>
+		    WHERE USER_NO IN 
+		    <foreach collection="mList" item="userNo" index="index" open="(" close=")" separator=","> 
+		        #{userNo}
+		    </foreach>
+		</update>
+		
+		
+		<select id="selectMemberDetailInfo" resultMap="memberResultSet">
+			SELECT * FROM MEMBER
+			WHERE USER_NO = #{userNo}
+		</select>
+		
+		
+		<update id="memberStatusUpdate">
+			UPDATE MEMBER SET
+			GRADE = #{grade},
+			STATUS = #{status}
+			WHERE USER_NO = #{userNo}
+		</update>
+		
+		
+		
+	<insert id="insertKakaoUserInfo" parameterType="member">
+			    INSERT INTO MEMBER 
+				    (USER_NO,
+				     USER_ID, 
+				     USER_NAME, 
+				     ORIGIN_NAME, 
+				     CHANGE_NAME, 
+				     ENROLL_DATE, 
+				     GRADE, 
+				     STATUS)
+				    VALUES (
+				    	SEQ_MNO.NEXTVAL,
+				        #{userId},
+				        #{userName}, 
+				        #{originName}, 
+				        #{changeName}, 
+				        SYSDATE, 
+				        '씨앗',
+				        'Y' 
+				    )
+			</insert>		
+  		
+  	
+		
+	</mapper>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<settings>
+		<setting name="jdbcTypeForNull" value="NULL"/>
+	</settings>
+	
+	<typeAliases>
+		<typeAlias type= "com.kh.tinyfarm.board.model.vo.Board" alias="board"/>
+		<typeAlias type="com.kh.tinyfarm.board.model.vo.BoardReply" alias="boardReply"/>
+		<typeAlias type="com.kh.tinyfarm.board.model.vo.BoardLike" alias="boardLike"/>
+		<typeAlias type="com.kh.tinyfarm.board.model.vo.BoardReport" alias="boardReport"/>
+		<typeAlias type="com.kh.tinyfarm.board.model.vo.ReplyReport" alias="replyReport"/>
+		
+
+		<typeAlias type = "com.kh.tinyfarm.member.model.vo.Member" alias ="member"/>
+		<typeAlias type = "com.kh.tinyfarm.follow.model.vo.Follow" alias="follow"/>
+		<typeAlias type="com.kh.tinyfarm.diary.model.vo.Diary" alias="diary"/>
+		<typeAlias type="com.kh.tinyfarm.diary.model.vo.DiaryCategory" alias="diaryCategory"/>
+		<typeAlias type="com.kh.tinyfarm.diary.model.vo.DiaryLike" alias="diaryLike"/>
+		<typeAlias type = "com.kh.tinyfarm.qna.model.vo.Qna" alias ="qna"/>
+		
+		<typeAlias type = "com.kh.tinyfarm.chat.model.vo.ChatMessage" alias ="chatMsg"/>
+		<typeAlias type = "com.kh.tinyfarm.chat.model.vo.ChatRoom" alias ="chatRoom"/>
+		<typeAlias type = "com.kh.tinyfarm.chat.model.vo.ChatRoomList" alias ="chatRoomList"/>
+		
+
+		<typeAlias type= "com.kh.tinyfarm.product.model.vo.Product" alias="product"/>
+		<typeAlias type= "com.kh.tinyfarm.common.model.vo.Attachment" alias="attachment"/>
+		<typeAlias type= "com.kh.tinyfarm.product.model.vo.Category" alias="category"/>
+		<typeAlias type= "com.kh.tinyfarm.product.model.vo.Payments" alias="payments"/>
+		<typeAlias type= "com.kh.tinyfarm.product.model.vo.Like" alias="like"/>
+
+		
+		
+		<typeAlias type="com.kh.tinyfarm.publicPlant.model.vo.PlantComment" alias="plantComment"/>
+		<typeAlias type="com.kh.tinyfarm.notice.model.vo.Notice" alias="notice"/>
+		<typeAlias type="com.kh.tinyfarm.mbti.model.vo.InGardenMbti" alias="inGardenMbti"/>
+		
+		<typeAlias type = "com.kh.tinyfarm.common.model.vo.Book" alias ="book"/>
+	
+	
+
+	</typeAliases>
+	
+</configuration>

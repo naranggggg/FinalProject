@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+ 
+  <mapper namespace="diaryMapper">
+  <!-- 영농일지 -->
+  	<resultMap type="diary" id="diaryResultSet">
+  		<result column="DIARY_NO" property="diaryNo"/>
+  		<result column="CATEGORY_NO" property="categoryNo"/>
+  		<result column="DIARY_WRITER" property="diaryWriter"/>
+  		<result column="SELECT_DATE" property="selectDate"/>
+  		<result column="DIARY_TITLE" property="diaryTitle"/>
+  		<result column="DIARY_CONTENT" property="diaryContent"/>
+  		<result column="SELECT_OPEN" property="selectOpen"/>
+  		<result column="CREATE_DATE" property="createDate"/>
+  		<result column="STATUS" property="status"/>
+  		<result column="LIKE_COUNT" property="likeCount"/>
+  	</resultMap>
+  	
+  	<!-- 영농일지 카테고리 -->
+  	<resultMap type="diaryCategory" id="cateResultSet">
+  		<result column="CATEGORY_NO" property="diaryCateNo"/>
+  		<result column="CATEGORY_NAME" property="diarycateName"/>
+  	</resultMap>
+  	
+  	<!-- 영농일지 좋아요 -->
+  	<resultMap type="diaryLike" id="likeCountResultSet">
+  		<result column="REF_DBNO" property="refDbno"/>
+  		<result column="USER_NO" property="userNo"/>
+  	</resultMap>
+  	
+  	<!-- 커뮤니티 -->
+  	<resultMap type="board" id="boardResultSet">
+		  	<result column="BOARD_NO" property="boardNo"/>
+		  	<result column="BOARD_WRITER" property="boardWriter"/>
+		  	<result column="BOARD_TITLE" property="boardTitle"/>
+		  	<result column="BOARD_CONTENT" property="boardContent"/>
+		  	<result column="COUNT" property="count"/>
+		  	<result column="LIKE_COUNT" property="likeCount"/>
+		  	<result column="CREATE_DATE" property="createDate"/>
+		  	<result column="TITLEIMG" property="titleImg"/>
+  	</resultMap>
+  	
+  	<!-- 커뮤니티 댓글 -->
+  	<resultMap type="boardReply" id="replyResultSet">
+		  	<result column="REPLY_NO" property="replyNo"/>
+		  	<result column="REF_BNO" property="refBno"/>
+		  	<result column="REPLY_WRITER" property="replyWriter"/>
+		  	<result column="REPLY_CONTENT" property="replyContent"/>
+		  	<result column="LIKE_COUNT" property="likeCount"/>
+		  	<result column="CREATE_DATE" property="createDate"/>
+		  	<result column="STATUS" property="status"/>
+  	</resultMap>
+  	
+  	<!-- 회원 -->
+  	<resultMap type="member" id="memberResultSet">
+			<result column = "USER_NO" property="userNo"/>
+			<result column = "USER_ID" property="userId"/>
+			<result column = "USER_PWD" property="userPwd"/>
+			<result column = "USER_NAME" property="userName"/>
+			<result column = "EMAIL" property="email"/>
+			<result column = "PHONE" property="phone"/>
+			<result column = "ADDRESS" property="address"/>
+			<result column = "ORIGIN_NAME" property="originName"/>
+			<result column = "CHANGE_NAME" property="changeName"/>
+			<result column = "ENROLL_DATE" property="enrollDate"/>
+			<result column = "GRADE" property="grade"/>
+			<result column = "STATUS" property="status"/>
+		</resultMap>
+  	
+  	<!-- 팔로우 -->
+  	<resultMap type="follow" id="followResultSet">
+  		<result column="USER_NO" property="userNo"/>
+  		<result column="FOLLOWING_ID" property="followingId"/>
+  	</resultMap>
+  	
+  	<!-- 판매 -->
+  	<resultMap type="product" id="productResultSet">
+	  	<result column="PRODUCT_NO" property="productNo"/>
+	  	<result column="USER_NO" property="userNo"/>
+	  	<result column="CATEGORY_NO" property="categoryNo"/>
+	  	<result column="PRODUCT_TITLE" property="productTitle"/>
+	  	<result column="PRODUCT_CONTENT" property="productContent"/>
+	  	<result column="PRODUCT_PRICE" property="productPrice"/>
+	  	<result column="COUNT" property="count"/>
+	  	<result column="REGI_DATE" property="regiDate"/>
+	  	<result column="MODI_DATE" property="modiDate"/>
+	  	<result column="STATUS" property="status"/>
+	  	<result column="SALES_STATUS" property="salesStatus"/>
+	  	<result column="FILE_PATH" property="filePath"/>
+	  	<result column="CHANGE_NAME" property="changeName"/>
+  	</resultMap>
+  	<!-- 주문 -->
+  	<resultMap type="payments" id="paymentResultSet">
+	  	<result column="PAYMENT_NO" property="paymentNo"/>
+	  	<result column="PAYMENT_METHOD" property="paymentMethod"/>
+	  	<result column="PAYMENT_PRICE" property="paymentPrice"/>
+	  	<result column="PRODUCT_NO" property="productNo"/>
+	  	<result column="USER_NO" property="userNo"/>
+	  	<result column="BUYER_ADDRESS" property="buyerAddress"/>
+	  	<result column="PAYMENT_STATUS" property="paymentStatus"/>
+	  	<result column="ORDER_NO" property="orderNo"/>
+	  	<result column="BUYER_EMAIL" property="buyerEmail"/>
+	  	<result column="BUYER_PHONE" property="buyerPhone"/>
+	  	<result column="BUYER_NAME" property="buyerName"/>
+	  	<result column="ORDER_REQUIRED" property="orderRequired"/>
+	  	<result column="ORDER_DATE" property="orderDate"/>
+	  	<result column="PRODUCT_TITLE" property="productTitle"/>
+	  	<result column="SALES_STATUS" property="salesStatus"/>
+	  	<result column="FILE_PATH" property="filePath"/>
+	  	<result column="CHANGE_NAME" property="changeName"/>
+  	</resultMap>
+  	
+  	<!-- 로그인 유저 정보 -->
+  	<select id="selectMember" parameterType="member" resultMap="memberResultSet">
+  		SELECT *
+		FROM MEMBER
+		WHERE USER_ID = #{userId}
+  	</select>
+  	
+  	<!-- 정보수정 -->
+  	<update id="updateMember" parameterType="member">
+  			UPDATE MEMBER
+			SET USER_NAME = #{userName}
+			   ,EMAIL = #{email}
+			   ,PHONE = #{phone}
+			   ,ADDRESS = #{address}
+			   ,ORIGIN_NAME = #{originName}
+			   ,CHANGE_NAME = #{changeName}
+			WHERE USER_ID = #{userId}
+			AND STATUS = 'Y'
+  		</update>
+  	
+  	<!-- 비밀번호 변경 -->
+  	<update id="updatePwd" parameterType="member">
+  		UPDATE MEMBER
+  		SET USER_PWD = #{userPwd}
+  		WHERE USER_ID = #{userId}
+  		AND STATUS = 'Y'
+  	</update>
+  	
+  	<!-- 회원 탈퇴 -->
+  	<update id="deleteMember" parameterType="member">
+  			UPDATE MEMBER
+  			SET STATUS = 'N'
+  			WHERE USER_ID = #{userId}
+  			AND STATUS = 'Y'
+  	</update>
+  	
+  	<!-- 내가 쓴 게시글 개수 -->
+  	<select id="boardListCount" parameterType="board" resultType="_int"> 
+		SELECT COUNT(*)
+		FROM BOARD B
+	   	JOIN MEMBER M ON(USER_NO=BOARD_WRITER)
+		WHERE M.USER_ID = #{userId}
+		AND B.STATUS = 'Y'
+	</select>
+	
+	<!-- 내가 쓴 댓글 개수 -->
+	<select id="replyListCount" parameterType="boardReply" resultType="_int"> 
+		SELECT COUNT(*)
+		FROM BOARD_REPLY R
+		JOIN MEMBER M ON(USER_NO=REPLY_WRITER)
+		WHERE M.USER_ID = #{userId}
+		AND R.STATUS = 'Y'
+	</select>
+	
+	<!-- 팔로잉수 -->
+	<select id="fwingListCount" parameterType="follow" resultType="_int"> 
+		SELECT COUNT(FOLLOWING_ID)
+		FROM FOLLOW F
+		JOIN MEMBER M USING(USER_NO)
+		WHERE M.USER_ID = #{userId}
+	</select>
+	
+	<!-- 팔로잉 목록 -->
+	<select id="myFollowingList" parameterType="follow" resultMap="followResultSet">
+		SELECT FOLLOWING_ID
+		FROM FOLLOW F
+		LEFT JOIN MEMBER M USING(USER_NO)
+		WHERE M.USER_ID=#{userId}
+	</select>
+
+	<!-- 팔로워수 -->
+	<select id="fwerListCount" parameterType="follow" resultType="_int"> 
+		SELECT COUNT(USER_ID)
+		FROM FOLLOW F
+		JOIN MEMBER M USING(USER_NO)
+		WHERE FOLLOWING_ID = #{userId}
+		AND M.STATUS = 'Y'
+	</select>
+	
+	<!-- 팔로워 목록 -->
+	<select id="myFollowerList" parameterType="member" resultMap="memberResultSet">
+		SELECT USER_ID
+		FROM MEMBER M
+		LEFT JOIN FOLLOW USING(USER_NO)
+		WHERE FOLLOWING_ID=#{userId}
+		AND M.STATUS = 'Y'
+	</select>
+  	
+    <!-- 내가 쓴 글 목록 -->
+    <select id="myBoardList" parameterType="board" resultMap="boardResultSet">
+       SELECT BOARD_NO,BOARD_TITLE,CREATE_DATE,COUNT,LIKE_COUNT
+       FROM BOARD B
+       JOIN MEMBER M ON(USER_NO=BOARD_WRITER)
+       WHERE USER_ID = #{userId}
+       AND B.STATUS='Y'
+       ORDER BY CREATE_DATE DESC
+    </select>
+    <!-- 내가 쓴 댓글 목록 -->
+    <select id="myReplyList" parameterType="boardReply" resultMap="replyResultSet">
+       SELECT REF_BNO,REPLY_CONTENT,CREATE_DATE,LIKE_COUNT
+       FROM BOARD_REPLY R
+       JOIN MEMBER M ON(USER_NO=REPLY_WRITER)
+       WHERE USER_ID=#{userId}
+       AND R.STATUS='Y'
+       ORDER BY CREATE_DATE DESC
+    </select>
+  	<!-- 달력 -->
+	<select id="selectDiaryList" parameterType="diary" resultMap="diaryResultSet">
+		SELECT SELECT_DATE, SELECT_OPEN
+		FROM DIARY_BOARD
+		WHERE DIARY_WRITER = #{userNo}
+	</select>
+  	<!-- 일지등록 -->
+  	<insert id="insertDiary" parameterType="diary">
+  		INSERT INTO DIARY_BOARD (DIARY_NO
+  								,CATEGORY_NO
+  								,DIARY_WRITER
+  								,SELECT_DATE
+  								,DIARY_TITLE
+  								,DIARY_CONTENT
+  								,SELECT_OPEN
+  								,CREATE_DATE
+  								,STATUS)
+  								VALUES(SEQ_DBNO.NEXTVAL
+								  		,#{categoryNo}
+								  		,#{diaryWriter}
+								  		,#{selectDate}
+								  		,#{diaryTitle}
+								        ,#{diaryContent}
+										,#{selectOpen}
+										,SYSDATE
+										,'Y')
+  	</insert>
+  	
+  	<!-- 일지개수 -->
+  	<select id="diaryListCount" resultType="_int">
+  		SELECT COUNT(DIARY_NO)
+		FROM DIARY_BOARD
+		WHERE DIARY_WRITER=#{userNo}
+  	</select>
+  	<!-- 회원등급변경 -->
+  	<update id="gradeSeed" parameterType="member">
+  		UPDATE MEMBER
+  		SET GRADE='씨앗'
+  		WHERE USER_NO=${userNo}
+  	</update>
+  	<update id="gradeShoot" parameterType="member">
+  		UPDATE MEMBER
+  		SET GRADE='새싹'
+  		WHERE USER_NO=${userNo}
+  	</update>
+  	<update id="gradeLeaf" parameterType="member">
+  		UPDATE MEMBER
+  		SET GRADE='잎새'
+  		WHERE USER_NO=${userNo}
+  	</update>
+  	<update id="gradeFruit" parameterType="member">
+  		UPDATE MEMBER
+  		SET GRADE='열매'
+  		WHERE USER_NO=${userNo}
+  	</update>
+  	
+	<!-- 일지 선택 -->
+  	<select id="selectDiary" parameterType="diary" resultMap="diaryResultSet">
+	  	SELECT DIARY_NO,CATEGORY_NO, DIARY_WRITER, SELECT_DATE, DIARY_TITLE, DIARY_CONTENT, SELECT_OPEN, CREATE_DATE
+		FROM DIARY_BOARD
+		WHERE DIARY_WRITER=#{diaryWriter}
+		AND SELECT_DATE=#{selectDate}
+  	</select>
+  	
+  	<!-- 일지보기 -->
+  	<select id="viewDiary" resultType="diary" resultMap="diaryResultSet">
+  		SELECT DIARY_NO,CATEGORY_NO,SELECT_DATE,DIARY_WRITER,DIARY_TITLE,DIARY_CONTENT,SELECT_OPEN
+  		FROM DIARY_BOARD
+  		WHERE DIARY_NO=#{diaryNo}
+  	</select>
+  	
+  	<!-- 카테고리 이름뽑기 -->
+  	<select id="selectCategory" resultType="diaryCategory" resultMap="cateResultSet">
+  		SELECT CATEGORY_NAME
+  		FROM DIARY_FARM_CATEGORY
+  		WHERE CATEGORY_NO = #{cNo}
+  	</select>
+  	
+  	<!-- 달력에서 일지 유무 -->
+  	<select id="existDiary" resultType="_int">
+  		SELECT COUNT(*)
+		FROM DIARY_BOARD
+		WHERE DIARY_WRITER = #{diaryWriter}
+		AND SELECT_DATE = #{selectDate}
+  	</select>
+  	
+  	<!-- 일지 삭제 -->
+  	<delete id="deleteDiary">
+  		DELETE FROM DIARY_BOARD
+		WHERE DIARY_NO = #{diaryNo}
+  	</delete>
+  	<!-- 일지 수정 -->
+  	<update id="updateDiary" parameterType="diary">
+  		UPDATE DIARY_BOARD
+  		SET CATEGORY_NO = #{categoryNo}
+  			,DIARY_TITLE = #{diaryTitle}
+  			,DIARY_CONTENT = #{diaryContent}
+  			,SELECT_OPEN = #{selectOpen}
+  		WHERE DIARY_NO=#{diaryNo} 
+  		AND STATUS = 'Y'
+  	</update>
+  	
+  	<!-- 구매내역 개수 -->
+  	<select id="orderCount" resultType="_int" parameterType="payments">
+  		SELECT COUNT(PAYMENT_NO)
+  		FROM PRODUCT_PAYMENT
+  		WHERE USER_NO=#{userNo}
+  	</select>
+  	
+  	<!-- 구매내역 목록 -->
+  	<select id="myOrderList" parameterType="payments" resultMap="paymentResultSet">
+  		SELECT PAYMENT_NO,ORDER_DATE,P.PRODUCT_TITLE,PAYMENT_METHOD,A.FILE_PATH,A.CHANGE_NAME,PAYMENT_PRICE, P.PRODUCT_NO, M.USER_NAME
+		FROM PRODUCT_PAYMENT PP
+		LEFT JOIN PRODUCT P ON(PP.PRODUCT_NO=P.PRODUCT_NO)
+		LEFT JOIN MEMBER M ON(P.USER_NO=M.USER_NO)
+		LEFT JOIN ATTACHMENT A ON (P.PRODUCT_NO=A.REF_NO)
+		WHERE PP.USER_NO=#{userNo}
+  	</select>
+  	
+  	<!-- 판매내역 개수 -->
+  	<select id="sellCount" resultType="_int" parameterType="product">
+  		SELECT COUNT(PRODUCT_NO)
+  		FROM PRODUCT
+  		WHERE USER_NO=#{userNo}
+  	</select>
+  	
+  	<!-- 판매내역 목록 -->
+  	<select id="mySellList" parameterType="product" resultMap="productResultSet">
+  		SELECT P.PRODUCT_NO,P.PRODUCT_TITLE,P.PRODUCT_PRICE,A.FILE_PATH,A.CHANGE_NAME, P.REGI_DATE,P.SALES_STATUS,M.USER_NAME
+		FROM PRODUCT P
+		LEFT JOIN PRODUCT_PAYMENT PP ON(P.PRODUCT_NO=PP.PRODUCT_NO)
+		LEFT JOIN MEMBER M ON(M.USER_NO=PP.USER_NO)
+		LEFT JOIN ATTACHMENT A ON (P.PRODUCT_NO=A.REF_NO)
+		WHERE P.USER_NO=#{userNo}
+  	</select>
+  	
+	<!-- 거래내역 검색 주문 개수 --> 
+  	<select id="searchDateOrderCount" resultType="_int" parameterType="payments">
+  		SELECT COUNT(PAYMENT_NO)
+		FROM PRODUCT_PAYMENT PP
+		LEFT JOIN PRODUCT P ON(PP.PRODUCT_NO=P.PRODUCT_NO)
+		LEFT JOIN MEMBER M ON(P.USER_NO=M.USER_NO)
+		WHERE PP.USER_NO=#{userNo}
+  		AND ORDER_DATE LIKE '%'||#{orderDate}||'%'
+  	</select>
+  	
+  	<!-- 주문리스트 검색 -->
+  	<select id="searchOrderList" parameterType="payments" resultMap="paymentResultSet">
+  		SELECT PP.PAYMENT_NO,PP.ORDER_DATE, P.PRODUCT_TITLE,PP.PAYMENT_METHOD,A.FILE_PATH,A.CHANGE_NAME,PP.PAYMENT_PRICE, P.PRODUCT_NO, M.USER_NAME
+		FROM PRODUCT_PAYMENT PP
+		LEFT JOIN PRODUCT P ON(PP.PRODUCT_NO=P.PRODUCT_NO)
+		LEFT JOIN MEMBER M ON(P.USER_NO=M.USER_NO)
+		LEFT JOIN ATTACHMENT A ON (P.PRODUCT_NO=A.REF_NO)
+		WHERE PP.USER_NO=#{userNo}
+		AND ORDER_DATE LIKE '%'||#{orderDate}||'%'
+		ORDER BY ORDER_DATE
+  	</select>
+  	
+ 	<!-- 거래내역 검색 판매내역 --> 
+  	<select id="searchDateSellCount" resultType="_int" parameterType="product">
+  		SELECT COUNT(PRODUCT_NO)
+  		FROM PRODUCT
+  		WHERE USER_NO=#{userNo}
+  		AND REGI_DATE LIKE '%'||#{regiDate}||'%'
+  	</select>
+  	
+  	<!-- 판매리스트 검색 -->
+  	<select id="searchSellList" parameterType="product" resultMap="productResultSet">
+  		SELECT P.PRODUCT_NO,P.PRODUCT_TITLE,P.PRODUCT_PRICE,A.FILE_PATH,A.CHANGE_NAME,P.REGI_DATE,P.SALES_STATUS,M.USER_NAME
+		FROM PRODUCT P
+		LEFT JOIN PRODUCT_PAYMENT PP ON(P.PRODUCT_NO=PP.PRODUCT_NO)
+		LEFT JOIN MEMBER M ON(M.USER_NO=PP.USER_NO)
+		LEFT JOIN ATTACHMENT A ON (P.PRODUCT_NO=A.REF_NO)
+		WHERE P.USER_NO=#{userNo}
+		AND REGI_DATE LIKE '%'||#{regiDate}||'%'
+		ORDER BY REGI_DATE
+  	</select>
+  	
+  	<!-- 찜목록 -->
+  	<select id="selectWish" parameterType="product" resultMap="productResultSet">
+  		SELECT P.PRODUCT_NO, PRODUCT_TITLE, PRODUCT_PRICE, CHANGE_NAME, FILE_PATH 
+		FROM PRODUCT P
+		LEFT JOIN PRODUCT_LIKE PL ON(P.PRODUCT_NO=PL.PRODUCT_NO)
+		LEFT JOIN ATTACHMENT A ON(P.PRODUCT_NO=A.REF_NO)
+		WHERE PL.USER_NO=#{userNo}
+		AND SALES_STATUS='Y'
+  	</select>
+
+	<!-- 영농일지 좋아요 -->
+	<select id="selectLike" resultMap="likeCountResultSet">
+		SELECT USER_NO
+		FROM DIARY_LIKE
+		WHERE REF_DBNO = #{refDbno}
+		AND USER_NO = #{userNo}
+	</select>
+  	
+  	<!-- 영농일지 좋아요 수 -->
+  	<select id="countLike" resultType="_int">
+  		SELECT COUNT(USER_NO)
+  		FROM DIARY_LIKE
+  		WHERE REF_DBNO = #{diaryNo}
+  	</select>
+  	
+  	<!-- 영농일지 작성자 추출 -->
+  	<select id="selectDiaryWriter" parameterType="member" resultMap="memberResultSet">
+  		SELECT USER_NO, USER_NAME, CHANGE_NAME
+  		FROM MEMBER
+  		WHERE USER_NO = #{userNo}
+  	</select>
+  	
+  	<!-- 영농일지 좋아요 증가 -->
+  	<insert id="LikeCount">
+  		INSERT INTO DIARY_LIKE VALUES(#{refDbno},#{userNo})
+  	</insert>
+  	
+  	<!-- 영농일지 좋아요 취소 -->
+  	<delete id="unLikeCount">
+  		DELETE FROM DIARY_LIKE
+  		WHERE REF_DBNO = #{refDbno} 
+  		AND USER_NO = #{userNo}
+  	</delete>
+  </mapper>

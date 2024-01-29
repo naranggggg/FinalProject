@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="productMapper"> 
+  
+  <resultMap type="product" id="productResultSet">
+  	<result column="PRODUCT_NO" property="productNo"/>
+  	<result column="USER_NO" property="userNo"/>
+  	<result column="CATEGORY_NO" property="categoryNo"/>
+  	<result column="CATEGORY_NAME" property="categoryName"/>
+  	<result column="PRODUCT_TITLE" property="productTitle"/>
+  	<result column="PRODUCT_CONTENT" property="productContent"/>
+  	<result column="PRODUCT_PRICE" property="productPrice"/>
+  	<result column="COUNT" property="count"/>
+  	<result column="REGI_DATE" property="regiDate"/>
+  	<result column="MODI_DATE" property="modiDate"/>
+  	<result column="SALES_STATUS" property="salesStatus"/>
+  	<result column="FILE_PATH" property="filePath"/>
+  	<result column="CHANGE_NAME" property="changeName"/>
+  	<result column="ORIGIN_NAME" property="originName"/>
+  	<result column="LIKE_COUNT" property="likeCount"/>
+  	<result column="USER_ID" property="userId"/>
+  	
+  </resultMap>
+  
+  <resultMap type="attachment" id="attachmentResultSet">
+  	<result column="FILE_NO" property="fileNo"/>
+  	<result column="REF_NO" property="refNO"/>
+  	<result column="ORIGIN_NAME" property="originName"/>
+  	<result column="CHANGE_NAME" property="changeName"/>
+  	<result column="FILE_PATH" property="filePath"/>
+  	<result column="CREATE_DATE" property="createDate"/>
+  	<result column="STATUS" property="status"/>
+  	<result column="FILE_TYPE" property="fileType"/>
+  </resultMap>
+  
+  <resultMap type="category" id="categoryResultSet">
+	  <result column="CATEGORY_NO" property="categoryNo"/>
+	  <result column="CATEGORY_NAME" property="categoryName"/>
+
+  </resultMap>
+  
+  
+  <select id="listCount" resultType="_int">
+  	SELECT COUNT(*)
+   	FROM PRODUCT P
+   	JOIN MEMBER M ON (P.USER_NO=M.USER_NO)
+   	WHERE P.SALES_STATUS='Y'
+   	<choose>
+   		<when test="category=='writer'">
+   			AND USER_ID
+   		</when>
+   		<when test="category=='title'">
+	    	AND PRODUCT_TITLE
+	    </when>
+	    <otherwise>
+	    	AND PRODUCT_CONTENT
+	    </otherwise>
+    </choose>
+    LIKE '%' || #{keyword} || '%'
+   	ORDER BY P.REGI_DATE DESC
+
+  </select>
+
+  <select id="selectList" resultMap="productResultSet" parameterType="hashmap">
+  	SELECT P.PRODUCT_NO
+	      ,P.PRODUCT_TITLE
+	      ,P.PRODUCT_PRICE
+	      ,AT.FILE_PATH
+	      ,AT.CHANGE_NAME
+	      ,M.USER_ID
+	      ,P.COUNT
+   		  ,P.REGI_DATE
+	FROM PRODUCT P
+	JOIN ATTACHMENT AT ON (P.PRODUCT_NO=AT.REF_NO)
+	JOIN MEMBER M ON (P.USER_NO=M.USER_NO)
+	WHERE P.SALES_STATUS = 'Y'
+	<choose>
+   		<when test="category=='writer'">
+   			AND USER_ID
+   		</when>
+   		<when test="category=='title'">
+	    	AND PRODUCT_TITLE
+	    </when>
+	    <otherwise>
+	    	AND PRODUCT_CONTENT
+	    </otherwise>
+    </choose>
+    LIKE '%' || #{keyword} || '%'
+	ORDER BY P.REGI_DATE DESC
+  </select>
+  
+  <update id="increaseCount" parameterType="_int">
+  	UPDATE PRODUCT
+	SET COUNT = COUNT + 1
+	WHERE PRODUCT_NO = #{pno}
+	AND SALES_STATUS = 'Y'
+	
+  </update>
+  
+  <select id="selectProduct" resultMap="productResultSet">
+  	SELECT *
+    FROM PRODUCT P
+    JOIN ATTACHMENT A ON (P.PRODUCT_NO=A.REF_NO)
+    JOIN MEMBER M ON (M.USER_NO=P.USER_NO)
+    JOIN PRODUCT_CATEGORY C ON (P.CATEGORY_NO = C.CATEGORY_NO) 
+    WHERE PRODUCT_NO = #{pno}
+    AND P.SALES_STATUS = 'Y'
+  </select>
+  
+  <select id="selectCategoryList" resultMap="categoryResultSet">
+  	SELECT *
+  	FROM PRODUCT_CATEGORY
+  
+  </select>
+ 
+  <insert id="insertProduct" parameterType="product">
+    INSERT INTO PRODUCT(PRODUCT_NO,
+                       USER_NO,
+                       CATEGORY_NO,
+                       PRODUCT_TITLE,
+                       PRODUCT_CONTENT,
+                       PRODUCT_PRICE)
+       VALUES (SEQ_PNO.NEXTVAL,
+                   #{userNo},
+                   #{categoryNo},
+                   #{productTitle},
+                   #{productContent},
+                   #{productPrice})
+  
+  </insert>
+ 
+  <insert id="insertAttachment" parameterType="attachment">
+  		INSERT INTO ATTACHMENT(FILE_NO
+							  ,REF_NO
+							  ,ORIGIN_NAME
+							  ,CHANGE_NAME
+							  ,FILE_PATH
+							  ,FILE_TYPE) 
+           			 VALUES(SEQ_FNO.NEXTVAL
+           			 		,SEQ_PNO.CURRVAL
+           			 		,#{originName}
+           			 		,#{changeName}
+           			 		,#{filePath}
+           			 		, 2)
+  </insert>
+  
+  <update id="updateProduct" parameterType="product">
+    UPDATE PRODUCT
+	SET PRODUCT_TITLE = #{productTitle}
+           ,PRODUCT_PRICE = #{productPrice}
+           ,PRODUCT_CONTENT = #{productContent}
+	WHERE PRODUCT_NO = #{productNo}
+	AND SALES_STATUS = 'Y'
+    AND FILE_TYPE = 2
+  
+  </update>
+  
+  <update id="updateAttachment" parameterType="attachment">
+ 	UPDATE ATTACHMENT
+	SET ORIGIN_NAME = #{originName}
+	   ,CHANGE_NAME = #{changeName}
+	   ,FILE_PATH = #{filePath}
+	WHERE REF_NO = #{refNo}
+	AND STATUS = 'Y'
+	AND FILE_TYPE = 2
+  </update>
+  
+  <delete id="deleteProduct" parameterType="product">
+    UPDATE PRODUCT
+    SET SALES_STATUS= 'N'
+    WHERE SALES_STATUS = 'Y'
+    AND PRODUCT_NO = #{pno}
+  	
+  </delete>
+  
+  <insert id="paySuccess" parameterType="payments">
+   	INSERT INTO PRODUCT_PAYMENT
+ 			VALUES(
+ 			#{paymentNo}
+ 			,#{paymentMethod}
+ 			,#{paymentPrice}
+ 			,#{productNo}
+ 			,#{userNo}
+ 			,#{buyerAddress}
+			,'Y'
+ 			,#{orderNo}
+ 			,#{buyerEmail}
+ 			,#{buyerPhone}
+ 			,#{buyerName}
+ 			,#{orderRequired}
+  			,SYSDATE
+ 			,#{productTitle}
+ 			,'N')
+ 
+  </insert>
+  
+  <update id="productStatus" parameterType="product">
+	UPDATE PRODUCT
+	SET SALES_STATUS = 'N'
+	WHERE SALES_STATUS = 'Y'
+	AND PRODUCT_NO = #{productNo}
+  
+  </update>
+  
+  <insert id="likeSave" parameterType="like">
+  	INSERT INTO PRODUCT_LIKE
+  				VALUES(#{productNo}
+  					  ,#{userNo}
+  					  ,0)
+  
+  </insert>
+  
+  <update id="likeUp" parameterType="product">
+  	UPDATE PRODUCT
+  	SET LIKE_COUNT = LIKE_COUNT+1
+  	WHERE PRODUCT_NO = #{productNo}
+  
+  </update>
+  
+  <select id="likeCount" resultType="_int">
+  	SELECT LIKE_COUNT
+  	FROM PRODUCT
+  	WHERE PRODUCT_NO = #{productNo}
+
+  </select>
+  
+  <delete id="likeRemove" parameterType="like">
+  	DELETE FROM PRODUCT_LIKE
+  	WHERE PRODUCT_NO = #{productNo}
+  	AND USER_NO = #{userNo}
+  	
+  
+  </delete>
+  
+  <update id="likedown" parameterType="product">
+  	UPDATE PRODUCT
+  	SET LIKE_COUNT = LIKE_COUNT-1
+  	WHERE PRODUCT_NO = #{productNo}
+  
+  </update>
+  
+  <select id="selectLikeYn" resultType="_int">
+	  	SELECT COUNT(*)
+	    FROM PRODUCT_LIKE
+	    WHERE PRODUCT_NO = #{productNo}
+	    AND USER_NO = #{userNo}
+	  
+  </select> 
+  
+  
+  
+  </mapper>

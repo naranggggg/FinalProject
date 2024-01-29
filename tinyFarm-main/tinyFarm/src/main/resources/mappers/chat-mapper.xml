@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="chatMapper">
+  	<resultMap type="chatRoom" id="chatRoomResultSet">
+	  	<result column="CHAT_ROOM_NO" property="chatRoomNo"/>
+	  	<result column="FIRST_MEM_ID" property="firstMemId"/>
+	  	<result column="RECEIVE_MEM_ID" property="receiveMemId"/>
+	  	<result column="FIRST_MEM_CONNECT_TIME" property="firstMemConnectTime"/>
+	  	<result column="RECEIVE_MEM_CONNECT_TIME" property="receiveMemConnectTime"/>
+		<result column="FIRST_MEM_STATUS" property="firstMemStatus"/>
+	  	<result column="RECEIVE_MEM_STATUS" property="receiveMemStatus"/>
+  	</resultMap>
+  	<resultMap type="chatRoomList" id="chatRoomListResultSet">
+	  	<result column="CHAT_ROOM_NO" property="chatRoomNo"/>
+	  	<result column="FIRST_MEM_ID" property="firstMemId"/>
+	  	<result column="RECEIVE_MEM_ID" property="receiveMemId"/>
+		<result column="FIRST_MEM_STATUS" property="firstMemStatus"/>
+	  	<result column="RECEIVE_MEM_STATUS" property="receiveMemStatus"/>
+		<result column="OTHER_ID" property="otherId"/>
+		<result column="CHANGE_NAME" property="changeName"/>
+		<result column="USER_NAME" property="userName"/>
+		<result column="MESSAGE" property="message"/>
+  	</resultMap>
+ 	<resultMap type="chatMsg" id="chatMsgResultSet">
+	  	<result column="CM_NO" property="cmNo"/>
+	  	<result column="MESSAGE" property="message"/>
+	  	<result column="CREATE_DATE" property="createDate"/>
+	  	<result column="CHAT_ROOM_NO" property="chatRoomNo"/>
+	  	<result column="USER_ID" property="userId"/>
+	 
+  	</resultMap>
+  	<resultMap type = "member" id = "memberResultSet">
+			<result column = "USER_NO" property="userNo"/>
+			<result column = "USER_ID" property="userId"/>
+			<result column = "USER_PWD" property="userPwd"/>
+			<result column = "USER_NAME" property="userName"/>
+			<result column = "EMAIL" property="email"/>
+			<result column = "PHONE" property="phone"/>
+			<result column = "ADDRESS" property="address"/>
+			<result column = "ORIGIN_NAME" property="originName"/>
+			<result column = "CHANGE_NAME" property="changeName"/>
+			<result column = "ENROLL_DATE" property="enrollDate"/>
+			<result column = "GRADE" property="grade"/>
+			<result column = "STATUS" property="status"/>
+		</resultMap>
+	
+	<select id="selectFindUserList" parameterType="string" resultMap="memberResultSet">
+		SELECT USER_ID,USER_NAME,CHANGE_NAME,ENROLL_DATE
+		FROM MEMBER
+		<choose>
+			<when test="search == ''">
+				WHERE STATUS = 'Y'
+			</when>
+			<otherwise>
+				WHERE USER_ID LIKE '%'||#{search}||'%' 
+				AND STATUS = 'Y'
+			</otherwise>
+		</choose>
+		
+	</select>
+	
+  	<insert id="insertChatRoom" parameterType="chatRoom">
+  		INSERT INTO CHAT_ROOM(CHAT_ROOM_NO,FIRST_MEM_ID,RECEIVE_MEM_ID) 
+  		VALUES (SEQ_CR_NO.NEXTVAL,#{firstMemId},#{receiveMemId})
+  	</insert>
+  	<!-- 채팅방 추가할때 이미 채팅방은 있지만 해당 회원이 채팅방 상태가 N이라면 Y로 바꿔주는 작업 -->
+  	<update id="updateChatRoom" parameterType="chatRoom">
+  		UPDATE CHAT_ROOM SET FIRST_MEM_STATUS = CASE WHEN #{firstMemId} = FIRST_MEM_ID THEN 'Y'ELSE FIRST_MEM_STATUS END,
+						 	 RECEIVE_MEM_STATUS = CASE WHEN #{firstMemId} = RECEIVE_MEM_ID THEN 'Y' ELSE RECEIVE_MEM_STATUS END
+		WHERE ((RECEIVE_MEM_ID = #{receiveMemId}) AND (FIRST_MEM_ID = #{firstMemId}))
+		   OR ((RECEIVE_MEM_ID = #{firstMemId}) AND FIRST_MEM_ID = #{receiveMemId})
+		
+  	</update>
+  	<!-- view에서 보내주는 firstMemId는 현재 로그인한 회원의 id -->
+  	<select id="checkExistChatRoom" parameterType="chatRoom" resultType="_int">
+  		SELECT COUNT(*)
+		FROM CHAT_ROOM
+		WHERE ((RECEIVE_MEM_ID = #{receiveMemId}) AND (FIRST_MEM_ID = #{firstMemId}))
+		OR ((RECEIVE_MEM_ID = #{firstMemId}) AND FIRST_MEM_ID = #{receiveMemId})
+
+  	</select>
+  	<!-- view에서 보내주는 firstMemId는 현재 로그인한 회원의 id -->
+  	<select id="checkStatusChatRoom" parameterType="chatRoom" resultType="_int">
+  		SELECT COUNT(*)
+		FROM CHAT_ROOM
+		WHERE ((RECEIVE_MEM_ID = #{receiveMemId}) AND (FIRST_MEM_ID = #{firstMemId} AND FIRST_MEM_STATUS = 'Y'))
+		OR ((RECEIVE_MEM_ID = #{firstMemId}  AND RECEIVE_MEM_STATUS = 'Y') AND FIRST_MEM_ID = #{receiveMemId})
+
+  	</select>
+  	
+  	<select id="selectChatList" parameterType="string" resultMap="chatRoomListResultSet">
+  		<!-- SELECT CHAT_ROOM_NO
+		      ,FIRST_MEM_ID
+		      ,RECEIVE_MEM_ID
+		      ,OTHER_ID
+		      ,CHANGE_NAME
+		      ,USER_NAME
+		FROM
+		(SELECT CHAT_ROOM_NO
+		      ,FIRST_MEM_ID
+		      ,RECEIVE_MEM_ID
+		      ,CASE WHEN #{userId} = RECEIVE_MEM_ID THEN FIRST_MEM_ID
+		            WHEN #{userId} = FIRST_MEM_ID THEN RECEIVE_MEM_ID         
+		       END  "OTHER_ID"
+		 
+		FROM CHAT_ROOM C
+		WHERE ((RECEIVE_MEM_ID = #{userId}) OR (FIRST_MEM_ID = #{userId}))
+		)
+		JOIN MEMBER M ON(OTHER_ID = USER_ID) -->
+		
+		SELECT CHAT_ROOM_NO,
+		       FIRST_MEM_ID,
+		       RECEIVE_MEM_ID,
+		       OTHER_ID,
+		       CHANGE_NAME,
+		       USER_NAME,
+		       MESSAGE
+		FROM (
+		    SELECT C.CHAT_ROOM_NO,
+		           C.FIRST_MEM_ID,
+		           C.RECEIVE_MEM_ID,
+		           CASE WHEN #{userId} = C.RECEIVE_MEM_ID THEN C.FIRST_MEM_ID
+		                WHEN #{userId} = C.FIRST_MEM_ID THEN C.RECEIVE_MEM_ID         
+		           END AS "OTHER_ID",
+		           M.CHANGE_NAME,
+		           M.USER_NAME,
+		           CM.MESSAGE,
+		           CM.CREATE_DATE,
+		           ROW_NUMBER() OVER (PARTITION BY C.CHAT_ROOM_NO ORDER BY CM.CREATE_DATE DESC) AS rn
+		    FROM CHAT_ROOM C
+		    JOIN MEMBER M ON (CASE WHEN #{userId} = C.RECEIVE_MEM_ID THEN C.FIRST_MEM_ID
+		                           WHEN #{userId} = C.FIRST_MEM_ID THEN C.RECEIVE_MEM_ID         
+		                      END = M.USER_ID)
+		    LEFT JOIN CHAT_MESSAGE CM ON (C.CHAT_ROOM_NO = CM.CHAT_ROOM_NO)
+		    WHERE ((C.RECEIVE_MEM_ID = #{userId} AND C.RECEIVE_MEM_STATUS = 'Y') OR (C.FIRST_MEM_ID = #{userId} AND C.FIRST_MEM_STATUS = 'Y'))
+		) T
+		WHERE rn = 1
+		ORDER BY CREATE_DATE DESC
+  	</select>
+  
+  	<insert id="insertChatMsg" parameterType="chatMsg">
+  		INSERT INTO CHAT_MESSAGE
+  		VALUES(SEQ_CM_NO.NEXTVAL,#{message},#{createDate},#{chatRoomNo},#{userId},#{receiveId})
+  	</insert>
+  
+  	<select id="selectChatMsg" parameterType="_int" resultMap="chatMsgResultSet">
+  		SELECT *
+  		FROM CHAT_MESSAGE
+  		WHERE CHAT_ROOM_NO = #{chatRoomNo}
+  	</select>
+  	
+  	<delete id="deleteRoom" parameterType="hashmap">
+  		UPDATE CHAT_ROOM SET FIRST_MEM_STATUS = CASE WHEN #{userId} = FIRST_MEM_ID THEN 'N' ELSE FIRST_MEM_STATUS END,
+						 	 RECEIVE_MEM_STATUS = CASE WHEN #{userId} = RECEIVE_MEM_ID THEN 'N' ELSE RECEIVE_MEM_STATUS END
+		WHERE CHAT_ROOM_NO = ${chatRoomNo}
+  	</delete>
+  	<update id="updateConnectTime" parameterType="hashmap">
+	
+  		UPDATE  (SELECT * 
+  				FROM CHAT_ROOM 
+  				WHERE CHAT_ROOM_NO = #{chatRoomNo})	
+				SET 
+				    first_mem_connect_time = CASE
+				        WHEN #{userId} = first_mem_id THEN SYSDATE 
+				        ELSE first_mem_connect_time 
+				    END,
+				    receive_mem_connect_time = CASE
+				        WHEN #{userId} = receive_mem_id THEN SYSDATE
+				        ELSE receive_mem_connect_time 
+				    END
+				WHERE
+				    #{userId} = first_mem_id OR #{userId} = receive_mem_id
+  	</update>
+  	
+  	<select id="selectNotReadMsg" parameterType="string" resultType="hashmap">
+  		SELECT CHAT_ROOM_NO,COUNT(*) COUNT
+		FROM CHAT_MESSAGE CM
+		JOIN (SELECT CHAT_ROOM_NO
+		      ,CASE WHEN(FIRST_MEM_ID = #{userId}) THEN #{userId}
+		            WHEN(RECEIVE_MEM_ID = #{userId}) THEN #{userId}
+		        END MEMBER_ID
+		      ,CASE WHEN(FIRST_MEM_ID = #{userId}) THEN FIRST_MEM_CONNECT_TIME
+		            WHEN(RECEIVE_MEM_ID = #{userId}) THEN RECEIVE_MEM_CONNECT_TIME
+		        END TIME
+		        FROM CHAT_ROOM
+		        WHERE FIRST_MEM_ID = #{userId} OR RECEIVE_MEM_ID = #{userId}) CR USING(CHAT_ROOM_NO)
+		WHERE CREATE_DATE > TIME
+		GROUP BY CHAT_ROOM_NO
+  	</select>
+  	
+  	<select id="getUserId" resultType="string">
+  		SELECT USER_ID
+  		FROM MEMBER
+  		WHERE USER_NO = #{userNo}
+  		AND STATUS = 'Y'	
+  	</select>
+  	
+  	<update id="updateReceiverStatus" parameterType="chatMsg">
+  		UPDATE CHAT_ROOM SET FIRST_MEM_STATUS = 'Y'
+  							,RECEIVE_MEM_STATUS = 'Y'
+  					WHERE CHAT_ROOM_NO = #{chatRoomNo}
+  	</update>
+  </mapper>

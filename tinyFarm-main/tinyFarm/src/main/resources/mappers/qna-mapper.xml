@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="qnaMapper">
+  
+  
+  	<resultMap type="qna" id="qnaResultMap">
+  		<result column="QNA_NO" property="qnaNo" />
+  		<result column="USER_NO" property="userNo" />
+  		<result column="USER_ID" property="userNo" />
+  		<result column="QNA_TITLE" property="qnaTitle" />
+  		<result column="QNA_CONTENT" property="qnaContent" />
+  		<result column="QNA_CREATEDATE" property="qnaCreatedate" />
+  		<result column="QNA_ANSWER_CONTENT" property="qnaAnswerContent" />
+  		<result column="QNA_ANSWER_CREATEDATE" property="qnaAnswerCreatedate" />
+  	</resultMap>
+  
+  
+  	<!-- 회원 - QNA 등록하기 -->
+  	<insert id="qnaEnroll">
+  		INSERT INTO QNA
+  		VALUES(
+	  			SEQ_QNO.NEXTVAL,
+	  			#{userNo},
+	  			#{qnaTitle},
+	  			#{qnaContent},
+	  			SYSDATE
+	  		)
+  	</insert>
+  	
+  	
+  	<!-- 관리자 - QNA 개수 -->
+  	<select id="qnaListCount" resultType="_int">
+  		SELECT COUNT(*)
+		FROM QNA LEFT JOIN QNA_ANSWER USING(QNA_NO)
+		<if test="showPeriod == 7">
+			WHERE QNA_CREATEDATE >= SYSDATE - 7
+		</if>
+		<if test="showPeriod == 30">
+			WHERE QNA_CREATEDATE >= SYSDATE - 30
+		</if>
+		<if test="answerYn == 0">
+			WHERE QNA_ANSWER_CREATEDATE IS NULL
+		</if>
+		<if test="answerYn == 1">
+			WHERE QNA_ANSWER_CREATEDATE IS NOT NULL
+		</if>
+  	</select>
+  	
+  	
+  	<!-- ############### 추후 동적 SQL 합쳐기 ############### -->
+  	<!-- 관리자 - QNA 리스트 조회 -->
+	<select id="selectQnaList" resultMap="qnaResultMap">
+	       SELECT
+			  QNA_NO,
+			  USER_ID,
+			  QNA_TITLE,
+			  QNA_CONTENT,
+			  QNA_CREATEDATE,
+			  QNA_ANSWER_CONTENT,
+			  QNA_ANSWER_CREATEDATE
+			FROM QNA
+			JOIN MEMBER USING(USER_NO)
+			LEFT JOIN QNA_ANSWER USING(QNA_NO)
+			<if test="answerYn == 0">
+				WHERE QNA_ANSWER_CREATEDATE IS NULL
+			</if>
+			<if test="answerYn == 1">
+				WHERE QNA_ANSWER_CREATEDATE IS NOT NULL
+			</if>
+			ORDER BY QNA_NO DESC
+	</select>
+	
+	
+  	<!-- 사용자 - QNA 리스트 조회 -->
+	<select id="selectMyQnaList" resultMap="qnaResultMap">
+	       SELECT
+			  QNA_NO,
+			  USER_ID,
+			  QNA_TITLE,
+			  QNA_CONTENT,
+			  QNA_CREATEDATE,
+			  QNA_ANSWER_CONTENT,
+			  QNA_ANSWER_CREATEDATE
+			FROM QNA
+			JOIN MEMBER USING(USER_NO)
+			LEFT JOIN QNA_ANSWER USING(QNA_NO)
+			WHERE USER_NO = #{userNo}
+			<if test="showPeriod == 7">
+				AND QNA_CREATEDATE >= SYSDATE - 7
+			</if>
+			<if test="showPeriod == 30">
+				AND QNA_CREATEDATE >= SYSDATE - 30
+			</if>
+			ORDER BY QNA_NO DESC
+	</select>
+	  	<!-- ############### 추후 동적 SQL 합쳐기 ############### -->
+  	
+  	
+  	<!-- 관리자 - QNA 상세조회 -->
+  	<select id="selectQnaDetail" resultMap="qnaResultMap">
+  		SELECT
+        QNA_NO,
+        USER_ID,
+        QNA_TITLE,
+        QNA_CONTENT,
+        QNA_CREATEDATE,
+        QNA_ANSWER_CONTENT,
+        QNA_ANSWER_CREATEDATE
+        FROM QNA
+        JOIN MEMBER USING(USER_NO)
+        LEFT JOIN QNA_ANSWER USING(QNA_NO)
+        WHERE QNA_NO = #{qnaNo}
+  	</select>
+  	
+  	
+  	<insert id="qnaAnswerEnroll">
+  		INSERT INTO
+  		QNA_ANSWER
+		VALUES(#{qnaNo}, #{qnaAnswerContent}, SYSDATE)
+  	</insert>
+  	
+  	
+  	<update id="qnaAnswerUpdate">
+  		UPDATE QNA_ANSWER
+  		SET
+  		QNA_ANSWER_CONTENT = #{qnaAnswerContent},
+  		QNA_ANSWER_CREATEDATE = SYSDATE
+  		WHERE QNA_NO = #{qnaNo}
+  	</update>
+  	
+  	
+  	<update id="myQnaUpdate">
+  		UPDATE QNA
+  		SET
+  		QNA_TITLE = #{qnaTitle},
+  		QNA_CONTENT = #{qnaContent},
+  		QNA_CREATEDATE = SYSDATE
+  		WHERE QNA_NO = #{qnaNo}
+  	</update>
+  	
+  	
+  	<delete id="myQnaDelete">
+  		DELETE FROM QNA
+  		WHERE QNA_NO = #{qnaNo}
+  	</delete>
+  	
+  	
+	<!--
+	
+	collection : 전달받은 인자. List or Array 형태만 가능
+	item : 전달받은 인자 값을 alias 명으로 대체
+	open : 구문이 시작될때 삽입할 문자열
+	close : 구문이 종료될때 삽입할 문자열
+	separator : 반복 되는 사이에 출력할 문자열
+	index : 반복되는 구문 번호이다. 0부터 순차적으로 증가
+	
+	 -->
+
+	<delete id="chkQnaDelete">
+        DELETE FROM QNA
+        WHERE 1=1
+        AND QNA_NO IN  
+        <foreach collection="list" item="qnaNo" index="index" open="(" close=")" separator=","> 
+            #{qnaNo} 
+        </foreach> 
+	</delete>
+	
+  
+  </mapper>

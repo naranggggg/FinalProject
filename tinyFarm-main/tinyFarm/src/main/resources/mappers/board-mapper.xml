@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="boardMapper">
+  	<resultMap type="board" id="boardResultSet">
+		  	<result column="BOARD_NO" property="boardNo"/>
+		  	<result column="BOARD_WRITER" property="boardWriter"/>
+		  	<result column="BOARD_TITLE" property="boardTitle"/>
+		  	<result column="BOARD_CONTENT" property="boardContent"/>
+		  	<result column="HASHTAG" property="hashTag"/>
+		  	<result column="COUNT" property="count"/>
+		  	<result column="LIKE_COUNT" property="likeCount"/>
+		  	<result column="CREATE_DATE" property="createDate"/>
+		  	<result column="CHANGE_NAME"  property="profile"/>
+		  	<result column="REPLY_COUNT" property="replyCount"/>
+		  	<result column="USER_NAME" property="userName"/>	  	
+  	</resultMap>
+  	
+  	<resultMap type="boardReply" id="boardReplyResultSet">
+  		<result column="REPLY_NO" property="replyNo"/>
+  		<result column="REF_BNO" property="refBno"/>
+  		<result column="REPLY_WRITER" property="replyWriter"/>
+  		<result column="REPLY_CONTENT" property="replyContent"/>
+  		<result column="LIKE_COUNT" property="likeCount"/>
+  		<result column="CREATE_DATE" property="createDate"/>
+  		<result column="STATUS" property="status"/>
+  		<result column="CHANGE_NAME" property="profile"/>
+  	</resultMap>
+  	
+  	<resultMap type="member" id="memberResultSet">
+  		<result column="USER_ID" property="userId"/>
+  		<result column="USER_NO" property="userNo"/>
+  		<result column="CHANGE_NAME" property="changeName"/>
+  	</resultMap>
+  	
+  	<resultMap type="boardLike" id="boardLikeResultSet">
+  		<result column="REF_BNO" property="refBno"/>
+  		<result column="USER_NO" property="userNo"/>
+  	</resultMap>
+  	
+  	<resultMap type="boardReport" id="boardReportResultSet">
+  		<result column="REPORT_NO" property="reportNo"/>
+  		<result column="REPORT_WRITER" property="reportWriter"/>
+  		<result column="REF_BNO" property="refBno"/>
+  		<result column="CATEGORY" property="category"/>
+  		<result column="REPORT_CONTENT" property="reportContent"/>
+  		<result column="CREATE_DATE" property="createDate"/>
+  		<result column="STATUS" property="status"/>
+  	</resultMap>
+  	
+  	
+  	<select id="boardListCount" resultType="_int">
+  		SELECT COUNT(*) COUNT
+		FROM BOARD
+		WHERE STATUS='Y'
+  	</select>
+  	
+  	<select id="selectBoardList" parameterType="_int" resultMap="boardResultSet">
+  		
+		SELECT B.BOARD_NO
+		        , M.USER_ID AS BOARD_WRITER 
+		        , B.BOARD_CONTENT
+		        , B.COUNT
+		        , B.LIKE_COUNT
+		        , B.CREATE_DATE
+		        , M.CHANGE_NAME
+		        ,(SELECT COUNT(*)
+		           FROM BOARD_REPLY
+		           WHERE REF_BNO = B.BOARD_NO) AS REPLY_COUNT
+		FROM BOARD B
+		JOIN MEMBER M ON M.USER_NO = B.BOARD_WRITER
+		WHERE B.STATUS = 'Y'
+		ORDER BY B.CREATE_DATE DESC
+	
+  	</select>
+  	
+  	<select id="searchBoardList" parameterType="string" resultMap="boardResultSet">
+  		SELECT B.BOARD_NO
+		        , M.USER_ID AS BOARD_WRITER 
+		        , B.BOARD_CONTENT
+		        , B.COUNT
+		        , B.LIKE_COUNT
+		        , B.CREATE_DATE
+		        , M.CHANGE_NAME
+                , B.HASHTAG
+		        ,(SELECT COUNT(*)
+		           FROM BOARD_REPLY
+		           WHERE REF_BNO = B.BOARD_NO) AS REPLY_COUNT
+		FROM BOARD B
+		JOIN MEMBER M ON M.USER_NO = B.BOARD_WRITER
+        WHERE M.USER_ID = #{searchText} OR B.HASHTAG LIKE #{searchHash}
+        AND B.STATUS = 'Y'
+		ORDER BY B.CREATE_DATE DESC
+  	</select>
+     
+ 
+  	
+  	
+  	
+  	<update id="boardIncreaseCount" parameterType="_int">
+  		UPDATE BOARD
+		SET COUNT = COUNT+1
+		WHERE BOARD_NO = #{boardNo}
+		AND STATUS = 'Y'
+  	</update>
+  	
+  	<select id="boardDetail" parameterType="_int" resultMap="boardResultSet">
+		SELECT BOARD_NO
+				,BOARD_TITLE
+		        ,USER_ID BOARD_WRITER
+		        ,BOARD_CONTENT
+		        ,B.COUNT
+		        ,LIKE_COUNT
+		        ,B.CREATE_DATE
+		        ,EMAIL
+		        ,CHANGE_NAME
+		        ,USER_NAME
+		        ,HASHTAG
+		FROM BOARD B
+		JOIN MEMBER M ON (M.USER_NO = B.BOARD_WRITER)
+		WHERE B.STATUS='Y'
+		AND BOARD_NO=#{boardNo}
+  	</select>
+  		
+  	<insert id="insertBoard">
+  		INSERT INTO BOARD(BOARD_NO
+            ,BOARD_WRITER 
+            ,BOARD_TITLE
+            ,BOARD_CONTENT
+            ,HASHTAG)
+		VALUES (SEQ_BNO.NEXTVAL,
+		        #{boardWriter},
+		        #{boardTitle},    
+		        #{boardContent},
+		        #{hashTag})
+  	</insert>
+  
+  	<update id="boardUpdate">
+  		UPDATE BOARD
+		SET BOARD_TITLE = #{boardTitle}
+    		,BOARD_CONTENT = #{boardContent}
+    		,HASHTAG = #{hashTag}
+		WHERE BOARD_NO = #{boardNo}
+		AND STATUS = 'Y'
+  	</update>
+  	
+  	
+  	<delete id="boardDelete">
+  		DELETE BOARD
+		WHERE BOARD_NO = #{boardNo}
+		AND STATUS = 'Y'
+  	</delete>
+  	
+  	<!-- ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ댓글영역ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ -->
+  	<select id="boardReplyList" parameterType="_int" resultMap="boardReplyResultSet"> 
+		SELECT REPLY_NO
+      		  ,USER_ID REPLY_WRITER
+      		  ,REPLY_CONTENT
+      		  ,LIKE_COUNT
+       		  ,CREATE_DATE
+       		  ,CHANGE_NAME 
+		FROM BOARD_REPLY BR
+		JOIN MEMBER M ON (REPLY_WRITER=USER_NO)
+		WHERE REF_BNO = #{boardNo}
+		AND BR.STATUS = 'Y'
+		ORDER BY BR.CREATE_DATE DESC
+  	</select>
+  	
+  	<insert id="insertReply">
+  		INSERT INTO BOARD_REPLY(REPLY_NO
+                    ,REF_BNO
+                    ,REPLY_WRITER
+                    ,REPLY_CONTENT)
+		VALUES(SEQ_BRNO.NEXTVAL
+		    ,#{refBno}   <!-- view에서 보낸 데이터 -->
+		    ,#{replyWriter}
+		    ,#{replyContent})
+  	</insert>
+  	
+  	<update id="updateReply">
+  		UPDATE BOARD_REPLY
+		SET REPLY_CONTENT= #{replyContent}
+		WHERE REPLY_NO = #{replyNo}
+		AND STATUS= 'Y'
+  	</update>
+  	
+  	<delete id="deleteReply" parameterType="_int">
+  		DELETE BOARD_REPLY
+		WHERE REPLY_NO = #{replyNo}
+		AND STATUS = 'Y'
+  	</delete>
+  	
+  	<!-- ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ좋아요영역ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ -->
+
+  	 <select id="findLike" parameterType="_int" resultMap="boardLikeResultSet">
+  	 	SELECT REF_BNO
+		FROM BOARD_LIKE
+		WHERE USER_NO = #{userNo}
+  	 </select>
+  	
+  	<update id="likeIncreaseCount">
+  		UPDATE BOARD
+		SET LIKE_COUNT = LIKE_COUNT+1
+		WHERE BOARD_NO = #{refBno}
+		AND STATUS = 'Y'
+  	</update>
+  	
+  	<insert id="doLike">
+  		INSERT INTO BOARD_LIKE(REF_BNO,USER_NO)
+		VALUES(#{refBno},#{userNo})
+  	</insert>
+  	
+  	<update id="likeDecreaseCount">
+	  	UPDATE BOARD
+		SET LIKE_COUNT = CASE WHEN LIKE_COUNT > 0 THEN LIKE_COUNT - 1 ELSE 0 END
+		WHERE BOARD_NO = #{refBno}
+		AND STATUS = 'Y'
+  	</update>
+  	
+  	<delete id="cancelLike">
+  		DELETE BOARD_LIKE
+		WHERE REF_BNO = #{refBno}
+		AND USER_NO = #{userNo}
+  	</delete>
+  	
+  	<insert id="boardReport">
+  		INSERT INTO BOARD_REPORT(REPORT_NO
+                        ,REPORT_WRITER
+                        ,REF_BNO
+                        ,CATEGORY
+                        ,REPORT_CONTENT)
+		VALUES(SEQ_BRNO.NEXTVAL
+			      ,#{reportWriter}
+			      ,#{refBno}
+			      ,#{category}
+			      ,#{reportContent})
+  	</insert>
+   
+  	<insert id="replyReport" parameterType="replyReport">
+  		INSERT INTO REPLY_REPORT(REPORT_NO
+                        ,REPORT_WRITER
+                        ,REF_RNO
+                        ,CATEGORY
+                        ,REPORT_CONTENT)
+		VALUES(SEQ_RRNO.NEXTVAL
+			      ,#{reportWriter}
+			      ,#{refRno}
+			      ,#{category}
+			      ,#{reportContent})
+  	</insert>
+  	
+  	
+  	<!-- ㅡㅡㅡㅡㅡㅡㅡㅡ팔로우하기ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ -->
+  	<insert id="">
+  		INSERT INTO FOLLOW(USER_ID,FOLLOWING_ID)
+		VALUES(#{userNo},#{boardWriter}   <!-- 로그인유저번호 / 게시판작성자아이디 -->
+  	</insert>
+  	
+  	
+  	
+  	
+  	
+  	
+  </mapper>
